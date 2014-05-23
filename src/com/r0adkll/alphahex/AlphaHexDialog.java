@@ -4,25 +4,24 @@ import com.google.common.io.Files;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.sun.deploy.ui.AboutDialog;
-import org.apache.log4j.Priority;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ColorChooser;
+import com.intellij.ui.ColorUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.*;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class AlphaHexDialog extends JDialog {
+
     private JPanel contentPane;
     private JTextField tf_name;
     private JTextField tf_alpha;
-    private JTextField tf_color;
     private JButton btn_create;
     private TextFieldWithBrowseButton colorTextField;
 
@@ -59,13 +58,34 @@ public class AlphaHexDialog extends JDialog {
                 onCancel();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        colorTextField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                updateColor();
+            }
+        });
+    }
+
+    /**
+     * Update the color text field
+     */
+    private void updateColor() {
+        Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(mProject), "Select color", null);
+        if (color != null) {
+            colorTextField.setText('#' + ColorUtil.toHex(color));
+            colorTextField.setForeground(color);
+        }
     }
 
     private void onGenerate() {
 
         String name = tf_name.getText();
-        String color = tf_color.getText();
+        String color = colorTextField.getText().trim();
         String alpha = tf_alpha.getText();
+
+        if(color.startsWith("#")){
+            color = color.substring(1);
+        }
 
         float percent = Float.valueOf(alpha);
         int code = (int) (percent * 255);
@@ -73,6 +93,7 @@ public class AlphaHexDialog extends JDialog {
 
         // Form the full hex code
         String fullHex = "#".concat(hex).concat(color);
+
 
         // Generate the resource definition to write in the colors.xml file
         String resourceDef = String.format("\t<color name=\"%s\">%s</color>", name, fullHex);
@@ -93,7 +114,7 @@ public class AlphaHexDialog extends JDialog {
                     String line = lines.get(i);
                     String nextLine = lines.get(i+1);
                     if(line.contains("color") && !nextLine.contains("color")){
-                        lines.add(i, resourceDef);
+                        lines.add(i+1, resourceDef);
                         didInsert = true;
                         break;
                     }
@@ -103,7 +124,7 @@ public class AlphaHexDialog extends JDialog {
                     for(int i=lines.size()-1; i>=0; i--){
                         String line = lines.get(i);
                         if(line.contains("</resources>")){
-                            lines.add(i, resourceDef);
+                            lines.add(i-1, resourceDef);
                             didInsert = true;
                             break;
                         }
