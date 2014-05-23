@@ -6,6 +6,10 @@ Android Studio plugin for generating #AARRGGBB hex codes and writing them to you
 ####Download
 * ([AlphaHex.jar](https://github.com/r0adkll/AlphaHex/blob/master/AlphaHex.jar))
 
+####Planned updates
+
+* Create 'colors.xml' if it does not exist
+
 ###Developer
 
 * r0adkll - ([http://r0adkll.net](http://r0adkll.net))
